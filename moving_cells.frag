@@ -6,9 +6,9 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
-float baseThreshold = 0.3;
-float baseVerticalBars = 100.0;
-float speed = 2.0;
+float verticalBars = 140.0;
+float rows = 70.0;
+float maxSpeed = 2.0;
 
 float random(in float x) {
     return fract(sin(x)*100000.0);;
@@ -19,25 +19,23 @@ vec2 movingRows(in vec2 st, in float time, float rows) {
     
     float rowNumber = floor(st.y);
     
-    st.x += sin(rowNumber) * time;
+    st.x -= abs(sin(rowNumber)) * time;
     
     return st;
+}
+
+float getRowThreshold(in vec2 st, in float mouseInput) {
+    float rowNumber = floor(st.y);
+    return min(abs(sin(rowNumber)), 0.040 + mouseInput);
 }
 
 void main() {
     vec2 st = gl_FragCoord.xy/u_resolution.xy;
     st.x *= u_resolution.x/u_resolution.y;
     
-    // Parameters over time
-    float a = sin(u_time);
-    float n = step(-0.5, a) + step(0.5, a) + 1.0;
+	st = movingRows(st, u_time / maxSpeed, rows);
     
-    // Bar code parameters
-    float threshold = fract(baseThreshold * n);
-    float verticalBars = baseVerticalBars * (n - 1.0) + baseVerticalBars;
-    
-    // Move rows
-	st = movingRow(st, u_time / (n * speed));
+    float threshold = getRowThreshold(st, u_mouse.x / (u_resolution.x * 4.0));
     
     
     vec3 color = vec3(step(threshold, random(floor(st.x * verticalBars))));
